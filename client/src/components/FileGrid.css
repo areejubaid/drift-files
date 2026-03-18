@@ -1,0 +1,21 @@
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.file-grid__empty {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--color-muted);
+}
+
+.file-grid__empty span {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.file-grid__empty p {
+  font-size: 0.95rem;
+}
