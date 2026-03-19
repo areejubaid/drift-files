@@ -9,7 +9,7 @@ A personal cloud drive web app where users can upload, manage, and download thei
 - Upload files via drag & drop or file picker
 - View all your files in a grid with name, size, type, and upload date
 - Download and delete files
-- Per-user private storage — files are scoped to your account
+- Per-user private storage - files are scoped to your account
 - Authentication via email/password, Google, or GitHub
 
 ## Tech Stack
