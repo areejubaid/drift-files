@@ -2,20 +2,23 @@ import express from "express";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { upload } from "../middleware/upload.js";
+import { requireAuth } from "../middleware/auth.js";
 import supabase from "../lib/supabase.js";
 
 const router = express.Router();
 const BUCKET = "files";
 
+router.use(requireAuth);
+
 // GET /api/files
-router.get("/", async (_req, res) => {
-  const { data, error } = await supabase.storage.from(BUCKET).list("", {
-    sortBy: { column: "created_at", order: "desc" },
-  });
+router.get("/", async (req, res) => {
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .list(req.user.id, { sortBy: { column: "created_at", order: "desc" } });
 
   if (error) return res.status(500).json({ error: error.message });
 
-  const files = data.map((file) => ({
+  const files = (data ?? []).map((file) => ({
     storedName: file.name,
     originalName: file.metadata?.originalName || file.name,
     mimetype: file.metadata?.mimetype || "application/octet-stream",
@@ -37,17 +40,18 @@ router.post("/upload", (req, res) => {
     for (const file of req.files) {
       const ext = path.extname(file.originalname);
       const storedName = `${uuidv4()}${ext}`;
+      const storagePath = `${req.user.id}/${storedName}`;
 
       const { error } = await supabase.storage
         .from(BUCKET)
-        .upload(storedName, file.buffer, {
+        .upload(storagePath, file.buffer, {
           contentType: file.mimetype,
           metadata: { originalName: file.originalname },
         });
 
       if (error) return res.status(500).json({ error: error.message });
 
-      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(storedName);
+      const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
       results.push({ storedName, publicUrl: urlData.publicUrl });
     }
 
@@ -56,14 +60,16 @@ router.post("/upload", (req, res) => {
 });
 
 // GET /api/files/download/:filename
-router.get("/download/:filename", (_req, res) => {
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(_req.params.filename);
+router.get("/download/:filename", (req, res) => {
+  const storagePath = `${req.user.id}/${req.params.filename}`;
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
   res.redirect(data.publicUrl);
 });
 
 // DELETE /api/files/:filename
 router.delete("/:filename", async (req, res) => {
-  const { error } = await supabase.storage.from(BUCKET).remove([req.params.filename]);
+  const storagePath = `${req.user.id}/${req.params.filename}`;
+  const { error } = await supabase.storage.from(BUCKET).remove([storagePath]);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
