@@ -1,4 +1,4 @@
-# FileShare
+# Drift Files
 
 A personal cloud drive web app where users can upload, manage, and download their files. Each user has their own private storage — sign in to access your files from anywhere.
 
